@@ -1,4 +1,5 @@
 import Amenities from "./components/Amenities";
+import FloatingAction from "./components/FloatingActions";
 import Floorplan from "./components/Floorplan";
 import Footer from "./components/Footer";
 import Hero from "./components/Hero";
@@ -20,6 +21,7 @@ export default function MainPage() {
       <Floorplan/>
       <Location/>
       <Footer/>
+      <FloatingAction/>
     </main>
   );
 }
