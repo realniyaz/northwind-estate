@@ -1,3 +1,6 @@
+"use client";
+
+import Script from "next/script";
 import Link from "next/link";
 import Image from "next/image";
 import { CheckCircle, Phone, Mail, ArrowLeft } from "lucide-react";
@@ -7,6 +10,18 @@ export default function ThankYouPage() {
 
   return (
     <main className="min-h-screen bg-[#FAF9F5] text-[#0A1128] flex flex-col items-center justify-center px-4 py-8 sm:py-12 relative overflow-hidden">
+      
+      {/* Google Ads Conversion Event Snippet */}
+      <Script id="google-ads-conversion" strategy="afterInteractive">
+        {`
+          if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
+            gtag('event', 'conversion', {
+              'send_to': 'AW-18243414829/S1AyCPOR0sAcEK3WkftD'
+            });
+          }
+        `}
+      </Script>
+
       {/* Ambient Luxury Glow Effects */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] sm:w-[600px] h-[350px] sm:h-[600px] bg-[#1E3A8A]/5 rounded-full blur-[100px] pointer-events-none" />
       <div className="absolute bottom-10 right-10 w-72 h-72 bg-[#D4AF37]/10 rounded-full blur-[80px] pointer-events-none" />

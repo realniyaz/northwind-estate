@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 
 const inter = Inter({
@@ -30,7 +31,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Northwind Wellness Residences | Yamuna Expressway",
-    description: "Explore ultra-luxury wellness residences featuring 3 & 4 BHK apartments starting at ₹1.42 Cr.",
+    description: "Explore ultra-luxury wellness residences featuring 3 & 4 BHK apartments starting at ₹1.25 Cr.",
   },
   robots: {
     index: true,
@@ -45,7 +46,23 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
-      <body className="antialiased selection:bg-gold selection:text-navy">
+      <head>
+        {/* Google tag (gtag.js) */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=AW-18243414829"
+          strategy="afterInteractive"
+        />
+        <Script id="google-gtag" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+
+            gtag('config', 'AW-18243414829');
+          `}
+        </Script>
+      </head>
+      <body className="antialiased selection:bg-[#D4AF37] selection:text-[#0A1128]">
         {children}
       </body>
     </html>
