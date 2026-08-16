@@ -154,7 +154,7 @@ export default function Hero() {
           <p className="text-slate-200 text-xs sm:text-base lg:text-lg mb-6 leading-relaxed max-w-2xl font-light mx-auto lg:mx-0">
             Experience first-ever glass facade luxury residences with grand 11.25-ft ceiling heights, 
             75% open wellness green spaces, and ultra-exclusive planning with only 2 apartments per core. 
-            Priced attractively starting at <strong className="text-[#D4AF37] font-semibold">₹8,500/Sq.Ft.</strong> (All-Inclusive).
+            Starting Size <strong className="text-[#D4AF37] font-semibold">1,465 Sq.Ft.</strong> at a Starting Price of <strong className="text-[#D4AF37] font-semibold">₹1.25 Cr</strong> (All-Exclusive).
           </p>
 
           {/* Correctly Positioned 3 Key Highlights Badges */}
