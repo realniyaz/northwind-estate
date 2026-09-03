@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { name, email, phone } = body;
 
+    // 1. Validation Guard
     if (!name || !email || !phone) {
       return NextResponse.json(
         { error: "Missing required fields (name, email, phone)." },
@@ -15,9 +14,55 @@ export async function POST(request: Request) {
       );
     }
 
+    // 2. Format Mobile and Timestamps for LeadRat
+    const cleanedMobile = phone.replace(/\D/g, "").slice(-10);
+
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const submittedDate = `${pad(now.getDate())}-${pad(now.getMonth() + 1)}-${String(now.getFullYear()).slice(-2)}`;
+    const submittedTime = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+
+    // 3. PUSH LEAD TO LEADRAT CRM (Array Payload Format)
+    try {
+      await fetch("https://connect.leadrat.com/api/v1/integration/Website", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "API-Key": "YTBlMzgxODItZWU0NC00M2I1LThhNDQtZWVlOTg3M2I0ZmFl",
+        },
+        body: JSON.stringify([
+          {
+            name: name,
+            mobile: cleanedMobile,
+            email: email,
+            countryCode: "91",
+            project: "Northwind Estate",
+            property: "Apartment",
+            propertyType: "Wellness Residences",
+            notes: "Lead Source: Northwind Estate Landing Page (northwind22d.com)",
+            submittedDate: submittedDate,
+            submittedTime: submittedTime,
+            subsource: "Website Direct",
+            leadStatus: "New",
+          },
+        ]),
+      });
+    } catch (crmError) {
+      // Failsafe: Log CRM error so Resend email dispatch continues uninterrupted
+      console.error("LeadRat CRM Integration Error:", crmError);
+    }
+
+    // 4. DISPATCH RESEND LEAD NOTIFICATION EMAIL
+    if (!process.env.RESEND_API_KEY) {
+      throw new Error("Missing RESEND_API_KEY environment variable.");
+    }
+
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    const recipientEmail = process.env.LEAD_RECIPIENT_EMAIL || "realtyfmleads@gmail.com";
+
     const data = await resend.emails.send({
       from: "Northwind Leads <onboarding@resend.dev>",
-      to: ["realtyfmleads@gmail.com"],
+      to: [recipientEmail],
       subject: `New Lead Inquiry: ${name} - Northwind Estate (northwind22d.com)`,
       html: `
         <div style="font-family: Arial, sans-serif; padding: 20px; color: #0F172A; background-color: #FBF9F5; border: 1px solid #E2E8F0; border-radius: 8px;">
@@ -37,13 +82,14 @@ export async function POST(request: Request) {
               <td style="padding: 10px; border-bottom: 1px solid #E2E8F0;"><a href="tel:${phone}">${phone}</a></td>
             </tr>
           </table>
-          <p style="margin-top: 20px; font-size: 12px; color: #64748B;">This lead was automatically dispatched via the Northwind Estate web application lead system.</p>
+          <p style="margin-top: 20px; font-size: 12px; color: #64748B;">This lead was automatically dispatched to LeadRat CRM and via the Northwind Estate web application lead system.</p>
         </div>
       `,
     });
 
     return NextResponse.json({ success: true, data }, { status: 200 });
   } catch (error: any) {
+    console.error("Lead Processing Error:", error);
     return NextResponse.json(
       { error: error.message || "Internal Server Error" },
       { status: 500 }
