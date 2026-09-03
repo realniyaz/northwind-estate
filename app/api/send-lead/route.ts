@@ -49,7 +49,7 @@ export async function POST(request: Request) {
       submittedDate: submittedDate,
       submittedTime: submittedTime,
       LeadId: "",
-      subsource: "Northwind Landing Page",
+      subsource: "Google",
       leadStatus: "Schedule Site Visit or Schedule Meeting",
       callRecordingUrl: "",
       scheduledDate: "",
