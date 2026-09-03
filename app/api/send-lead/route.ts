@@ -4,9 +4,9 @@ import { Resend } from "resend";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { name, email, phone } = body;
+    const { name, email, phone, countryCode, planType, service, message } = body;
 
-    // 1. Validation Guard
+    // 1. Core Validation Guard Checks
     if (!name || !email || !phone) {
       return NextResponse.json(
         { error: "Missing required fields (name, email, phone)." },
@@ -16,6 +16,7 @@ export async function POST(request: Request) {
 
     // 2. Format Mobile and Timestamps for LeadRat
     const cleanedMobile = phone.replace(/\D/g, "").slice(-10);
+    const fullPhoneNumber = `${countryCode || "+91"} ${phone}`;
 
     const now = new Date();
     const pad = (n: number) => String(n).padStart(2, "0");
@@ -35,11 +36,11 @@ export async function POST(request: Request) {
             name: name,
             mobile: cleanedMobile,
             email: email,
-            countryCode: "91",
+            countryCode: countryCode ? countryCode.replace("+", "") : "91",
             project: "Northwind Estate",
             property: "Apartment",
-            propertyType: "Wellness Residences",
-            notes: "Lead Source: Northwind Estate Landing Page (northwind22d.com)",
+            propertyType: planType || service || "Wellness Residences",
+            notes: `Lead Source: Northwind Estate Landing Page (northwind22d.com). Typology/Service: ${planType || service || "General Enquiry"}. Message: ${message || "N/A"}`,
             submittedDate: submittedDate,
             submittedTime: submittedTime,
             subsource: "Website Direct",
@@ -70,17 +71,26 @@ export async function POST(request: Request) {
           <p>You have received a new inquiry from the landing page (<a href="https://northwind22d.com" target="_blank">northwind22d.com</a>):</p>
           <table style="width: 100%; margin-top: 15px; border-collapse: collapse;">
             <tr>
-              <td style="padding: 10px; border-bottom: 1px solid #E2E8F0; font-weight: bold; width: 120px;">Full Name:</td>
+              <td style="padding: 10px; border-bottom: 1px solid #E2E8F0; font-weight: bold; width: 140px;">Full Name:</td>
               <td style="padding: 10px; border-bottom: 1px solid #E2E8F0;">${name}</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px; border-bottom: 1px solid #E2E8F0; font-weight: bold;">Phone Number:</td>
+              <td style="padding: 10px; border-bottom: 1px solid #E2E8F0;"><a href="tel:${fullPhoneNumber}">${fullPhoneNumber}</a></td>
             </tr>
             <tr>
               <td style="padding: 10px; border-bottom: 1px solid #E2E8F0; font-weight: bold;">Email Address:</td>
               <td style="padding: 10px; border-bottom: 1px solid #E2E8F0;"><a href="mailto:${email}">${email}</a></td>
             </tr>
             <tr>
-              <td style="padding: 10px; border-bottom: 1px solid #E2E8F0; font-weight: bold;">Phone Number:</td>
-              <td style="padding: 10px; border-bottom: 1px solid #E2E8F0;"><a href="tel:${phone}">${phone}</a></td>
+              <td style="padding: 10px; border-bottom: 1px solid #E2E8F0; font-weight: bold;">Enquiry Context:</td>
+              <td style="padding: 10px; border-bottom: 1px solid #E2E8F0;">${planType || service || "General Enquiry"}</td>
             </tr>
+            ${message ? `
+            <tr>
+              <td style="padding: 10px; border-bottom: 1px solid #E2E8F0; font-weight: bold;">User Message:</td>
+              <td style="padding: 10px; border-bottom: 1px solid #E2E8F0;">${message}</td>
+            </tr>` : ""}
           </table>
           <p style="margin-top: 20px; font-size: 12px; color: #64748B;">This lead was automatically dispatched to LeadRat CRM and via the Northwind Estate web application lead system.</p>
         </div>
