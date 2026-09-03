@@ -3,10 +3,19 @@ import { Resend } from "resend";
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { name, email, phone, countryCode, planType, service, message } = body;
+    const resendApiKey = process.env.RESEND_API_KEY;
+    
+    if (!resendApiKey) {
+      return NextResponse.json(
+        { error: "Server configuration error: Resend API key is missing." },
+        { status: 500 }
+      );
+    }
 
-    // 1. Core Validation Guard Checks
+    const resend = new Resend(resendApiKey);
+    const body = await request.json();
+    const { name, email, phone, unitType, floorplanRequested, inquiryType } = body;
+
     if (!name || !email || !phone) {
       return NextResponse.json(
         { error: "Missing required fields (name, email, phone)." },
@@ -14,92 +23,95 @@ export async function POST(request: Request) {
       );
     }
 
-    // 2. Format Mobile and Timestamps for LeadRat
-    const cleanedMobile = phone.replace(/\D/g, "").slice(-10);
-    const fullPhoneNumber = `${countryCode || "+91"} ${phone}`;
-
+    // Format current date and time for LeadRat CRM payload
     const now = new Date();
-    const pad = (n: number) => String(n).padStart(2, "0");
-    const submittedDate = `${pad(now.getDate())}-${pad(now.getMonth() + 1)}-${String(now.getFullYear()).slice(-2)}`;
-    const submittedTime = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    const submittedDate = now.toISOString().split("T")[0].split("-").reverse().join("-"); // Format DD-MM-YY or YYYY-MM-DD
+    const submittedTime = now.toTimeString().split(" ")[0];
 
-    // 3. PUSH LEAD TO LEADRAT CRM (Array Payload Format)
+    // ================= 1. PUSH LEAD TO LEADRAT CRM =================
+    const leadRatPayload = {
+      name: name,
+      state: "Uttar Pradesh", // Default region for Yamuna Expressway project
+      city: "Greater Noida",
+      location: "Sector 22D, Yamuna Expressway",
+      budget: "12500000", // Starting price reference (₹1.25 Cr)
+      notes: unitType ? `Interested in ${unitType}` : floorplanRequested ? `Requested Floorplan: ${floorplanRequested}` : "Website General Inquiry",
+      email: email,
+      countryCode: "91",
+      mobile: phone,
+      project: "Northwind Estate Residences",
+      property: "Apartment",
+      leadExpectedBudget: "12500000",
+      propertyType: "Residential",
+      submittedDate: submittedDate,
+      submittedTime: submittedTime,
+      LeadId: "",
+      subsource: "Northwind Landing Page",
+      leadStatus: "Schedule Site Visit or Schedule Meeting",
+      callRecordingUrl: "",
+      scheduledDate: "",
+      additionalProperties: {
+        source: "northwind22d.com",
+        inquiryContext: unitType || floorplanRequested || inquiryType || "General",
+      },
+    };
+
     try {
       await fetch("https://connect.leadrat.com/api/v1/integration/Website", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
           "API-Key": "YTBlMzgxODItZWU0NC00M2I1LThhNDQtZWVlOTg3M2I0ZmFl",
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify([
-          {
-            name: name,
-            mobile: cleanedMobile,
-            email: email,
-            countryCode: countryCode ? countryCode.replace("+", "") : "91",
-            project: "Northwind Estate",
-            property: "Apartment",
-            propertyType: planType || service || "Wellness Residences",
-            notes: `Lead Source: Northwind Estate Landing Page (northwind22d.com). Typology/Service: ${planType || service || "General Enquiry"}. Message: ${message || "N/A"}`,
-            submittedDate: submittedDate,
-            submittedTime: submittedTime,
-            subsource: "Website Direct",
-            leadStatus: "New",
-          },
-        ]),
+        body: JSON.stringify(leadRatPayload),
       });
     } catch (crmError) {
-      // Failsafe: Log CRM error so Resend email dispatch continues uninterrupted
-      console.error("LeadRat CRM Integration Error:", crmError);
+      console.error("Failed to push lead to LeadRat CRM:", crmError);
+      // We continue execution so the email notification still goes through even if CRM sync encounters a minor glitch
     }
 
-    // 4. DISPATCH RESEND LEAD NOTIFICATION EMAIL
-    if (!process.env.RESEND_API_KEY) {
-      throw new Error("Missing RESEND_API_KEY environment variable.");
-    }
+    // ================= 2. SEND NOTIFICATION EMAIL VIA RESEND =================
+    const contextTag = unitType ? `[Unit: ${unitType}]` : floorplanRequested ? `[Floorplan: ${floorplanRequested}]` : inquiryType ? `[Type: ${inquiryType}]` : "";
 
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    const recipientEmail = process.env.LEAD_RECIPIENT_EMAIL || "realtyfmleads@gmail.com";
-
-    const data = await resend.emails.send({
+    const emailData = await resend.emails.send({
       from: "Northwind Leads <onboarding@resend.dev>",
-      to: [recipientEmail],
-      subject: `New Lead Inquiry: ${name} - Northwind Estate (northwind22d.com)`,
+      to: ["realtyfmleads@gmail.com"],
+      subject: `New Lead Inquiry ${contextTag}: ${name} - Northwind Estate (northwind22d.com)`,
       html: `
         <div style="font-family: Arial, sans-serif; padding: 20px; color: #0F172A; background-color: #FBF9F5; border: 1px solid #E2E8F0; border-radius: 8px;">
           <h2 style="color: #1C3D2F; border-bottom: 2px solid #D4AF37; padding-bottom: 8px;">New Lead Received - Northwind Wellness Residences</h2>
-          <p>You have received a new inquiry from the landing page (<a href="https://northwind22d.com" target="_blank">northwind22d.com</a>):</p>
+          <p>You have received a new inquiry from the landing page (<a href="https://northwind22d.com" target="_blank">northwind22d.com</a>) which has also been pushed to <strong>LeadRat CRM</strong>:</p>
           <table style="width: 100%; margin-top: 15px; border-collapse: collapse;">
             <tr>
               <td style="padding: 10px; border-bottom: 1px solid #E2E8F0; font-weight: bold; width: 140px;">Full Name:</td>
               <td style="padding: 10px; border-bottom: 1px solid #E2E8F0;">${name}</td>
             </tr>
             <tr>
-              <td style="padding: 10px; border-bottom: 1px solid #E2E8F0; font-weight: bold;">Phone Number:</td>
-              <td style="padding: 10px; border-bottom: 1px solid #E2E8F0;"><a href="tel:${fullPhoneNumber}">${fullPhoneNumber}</a></td>
-            </tr>
-            <tr>
               <td style="padding: 10px; border-bottom: 1px solid #E2E8F0; font-weight: bold;">Email Address:</td>
               <td style="padding: 10px; border-bottom: 1px solid #E2E8F0;"><a href="mailto:${email}">${email}</a></td>
             </tr>
             <tr>
-              <td style="padding: 10px; border-bottom: 1px solid #E2E8F0; font-weight: bold;">Enquiry Context:</td>
-              <td style="padding: 10px; border-bottom: 1px solid #E2E8F0;">${planType || service || "General Enquiry"}</td>
+              <td style="padding: 10px; border-bottom: 1px solid #E2E8F0; font-weight: bold;">Phone Number:</td>
+              <td style="padding: 10px; border-bottom: 1px solid #E2E8F0;"><a href="tel:${phone}">${phone}</a></td>
             </tr>
-            ${message ? `
+            ${unitType ? `
             <tr>
-              <td style="padding: 10px; border-bottom: 1px solid #E2E8F0; font-weight: bold;">User Message:</td>
-              <td style="padding: 10px; border-bottom: 1px solid #E2E8F0;">${message}</td>
+              <td style="padding: 10px; border-bottom: 1px solid #E2E8F0; font-weight: bold;">Selected Unit:</td>
+              <td style="padding: 10px; border-bottom: 1px solid #E2E8F0;">${unitType}</td>
+            </tr>` : ""}
+            ${floorplanRequested ? `
+            <tr>
+              <td style="padding: 10px; border-bottom: 1px solid #E2E8F0; font-weight: bold;">Floorplan Requested:</td>
+              <td style="padding: 10px; border-bottom: 1px solid #E2E8F0;">${floorplanRequested}</td>
             </tr>` : ""}
           </table>
-          <p style="margin-top: 20px; font-size: 12px; color: #64748B;">This lead was automatically dispatched to LeadRat CRM and via the Northwind Estate web application lead system.</p>
+          <p style="margin-top: 20px; font-size: 12px; color: #64748B;">Successfully synced with LeadRat CRM API endpoint.</p>
         </div>
       `,
     });
 
-    return NextResponse.json({ success: true, data }, { status: 200 });
+    return NextResponse.json({ success: true, emailData }, { status: 200 });
   } catch (error: any) {
-    console.error("Lead Processing Error:", error);
     return NextResponse.json(
       { error: error.message || "Internal Server Error" },
       { status: 500 }
