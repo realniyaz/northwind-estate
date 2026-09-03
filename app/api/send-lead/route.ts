@@ -69,7 +69,8 @@ export async function POST(request: Request) {
           "API-Key": "YTBlMzgxODItZWU0NC00M2I1LThhNDQtZWVlOTg3M2I0ZmFl",
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(leadRatPayload),
+        // Wrap the payload in an array [] to match LeadRat's List<WebsiteIntegrationDto> requirement
+        body: JSON.stringify([leadRatPayload]),
       });
 
       crmResponseStatus = crmRes.status;
