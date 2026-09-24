@@ -89,7 +89,7 @@ export default function Footer() {
             </ul>
             <div className="pt-2">
               <span className="text-[11px] font-semibold text-white block bg-[#0B132B] px-3.5 py-2.5 rounded-xl border border-[#D4AF37]/40 shadow-sm">
-                RERA No: UPRERAAGT25307
+                RERA No: Coming Soon
               </span>
             </div>
           </div>
