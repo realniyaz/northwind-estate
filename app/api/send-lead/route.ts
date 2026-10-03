@@ -36,25 +36,25 @@ export async function POST(request: Request) {
       name: name,
       state: "Uttar Pradesh",
       city: "Greater Noida",
-      location: "Sector 22D, Yamuna Expressway",
-      budget: "12500000", // Starting reference ₹1.25 Cr
+      location: "Prime Growth Corridor, NCR",
+      budget: "18500000", // Starting reference ₹1.85 Cr Onwards
       notes: unitType ? `Interested in ${unitType}` : floorplanRequested ? `Requested Floorplan: ${floorplanRequested}` : "Website General Inquiry",
       email: email,
       countryCode: "91",
       mobile: phone,
-      project: "Northwind Estate Residences",
+      project: "Hero Properties Residences",
       property: "Apartment",
-      leadExpectedBudget: "12500000",
+      leadExpectedBudget: "18500000",
       propertyType: "Residential",
       submittedDate: submittedDate,
       submittedTime: submittedTime,
       LeadId: "",
-      subsource: "Google",
+      subsource: "Hero Properties Landing Page",
       leadStatus: "Schedule Site Visit or Schedule Meeting",
       callRecordingUrl: "",
       scheduledDate: "",
       additionalProperties: {
-        source: "northwind22d.com",
+        source: "hero-properties",
         inquiryContext: unitType || floorplanRequested || inquiryType || "General",
       },
     };
@@ -66,10 +66,9 @@ export async function POST(request: Request) {
       const crmRes = await fetch("https://connect.leadrat.com/api/v1/integration/Website", {
         method: "POST",
         headers: {
-          "API-Key": "YTBlMzgxODItZWU0NC00M2I1LThhNDQtZWVlOTg3M2I0ZmFl",
+          "API-Key": "ZjMyMjMwOWYtZDk5My00ZjI1LWE3OWMtMzNmODc3MzlmYzZk",
           "Content-Type": "application/json",
         },
-        // Wrap the payload in an array [] to match LeadRat's List<WebsiteIntegrationDto> requirement
         body: JSON.stringify([leadRatPayload]),
       });
 
@@ -84,13 +83,13 @@ export async function POST(request: Request) {
     const contextTag = unitType ? `[Unit: ${unitType}]` : floorplanRequested ? `[Floorplan: ${floorplanRequested}]` : inquiryType ? `[Type: ${inquiryType}]` : "";
 
     const emailData = await resend.emails.send({
-      from: "Northwind Leads <onboarding@resend.dev>",
+      from: "Hero Properties Leads <onboarding@resend.dev>",
       to: ["realtyfmleads@gmail.com"],
-      subject: `New Lead Inquiry ${contextTag}: ${name} - Northwind Estate (northwind22d.com)`,
+      subject: `New Lead Inquiry ${contextTag}: ${name} - Hero Properties`,
       html: `
         <div style="font-family: Arial, sans-serif; padding: 20px; color: #0F172A; background-color: #FBF9F5; border: 1px solid #E2E8F0; border-radius: 8px;">
-          <h2 style="color: #1C3D2F; border-bottom: 2px solid #D4AF37; padding-bottom: 8px;">New Lead Received - Northwind Wellness Residences</h2>
-          <p>You have received a new inquiry from the landing page (<a href="https://northwind22d.com" target="_blank">northwind22d.com</a>):</p>
+          <h2 style="color: #1C3D2F; border-bottom: 2px solid #D4AF37; padding-bottom: 8px;">New Lead Received - Hero Properties Residences</h2>
+          <p>You have received a new inquiry from the landing page:</p>
           <table style="width: 100%; margin-top: 15px; border-collapse: collapse;">
             <tr>
               <td style="padding: 10px; border-bottom: 1px solid #E2E8F0; font-weight: bold; width: 140px;">Full Name:</td>
