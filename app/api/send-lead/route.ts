@@ -42,14 +42,14 @@ export async function POST(request: Request) {
       email: email,
       countryCode: "91",
       mobile: phone,
-      project: "Hero Properties Residences",
+      project: "Northwind Wellness Residences",
       property: "Apartment",
       leadExpectedBudget: "18500000",
       propertyType: "Residential",
       submittedDate: submittedDate,
       submittedTime: submittedTime,
       LeadId: "",
-      subsource: "Hero Properties Landing Page",
+      subsource: "Northwind Wellness Landing Page",
       leadStatus: "Schedule Site Visit or Schedule Meeting",
       callRecordingUrl: "",
       scheduledDate: "",
@@ -83,7 +83,7 @@ export async function POST(request: Request) {
     const contextTag = unitType ? `[Unit: ${unitType}]` : floorplanRequested ? `[Floorplan: ${floorplanRequested}]` : inquiryType ? `[Type: ${inquiryType}]` : "";
 
     const emailData = await resend.emails.send({
-      from: "Hero Properties Leads <onboarding@resend.dev>",
+      from: "Northwind Wellness Leads <onboarding@resend.dev>",
       to: ["realtyfmleads@gmail.com"],
       subject: `New Lead Inquiry ${contextTag}: ${name} - Hero Properties`,
       html: `
